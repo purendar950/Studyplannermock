@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>My Attempts | Study Planner Mock</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container inner">
+      <a href="index.html" class="brand">
+        <span class="logo">S</span>
+        <span>STUDY PLANNER MOCK<small>SMART MOCK TESTS</small></span>
+      </a>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="exams/cgl/index.html">SSC CGL</a>
+        <span id="authSlot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding:40px 20px;">
+    <div class="section-head">
+      <h2>My Attempts</h2>
+      <p>Your saved test results and performance over time.</p>
+    </div>
+
+    <div class="stats" id="summary" style="margin-top:0;"></div>
+
+    <div id="content"><div class="empty">Loading…</div></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabaseClient.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script>
+    (async function () {
+      await window.MMH_AUTH.renderNav({ base: "" });
+      const content = document.getElementById("content");
+      const summary = document.getElementById("summary");
+
+      if (!window.MMH_CONFIGURED) {
+        summary.innerHTML = "";
+        content.innerHTML = `<div class="notice">Demo mode: connect Supabase (assets/js/config.js) to save and view attempts tied to your account.</div>`;
+        return;
+      }
+
+      const user = await window.MMH_AUTH.requireAuth("login.html");
+      if (!user) return;
+
+      let attempts = [];
+      try { attempts = await window.MMH_API.getAttempts(); }
+      catch (e) { content.innerHTML = `<div class="empty">Couldn't load attempts.</div>`; return; }
+
+      if (!attempts.length) {
+        summary.innerHTML = "";
+        content.innerHTML = `<div class="empty">No attempts yet. <a href="exams/cgl/index.html" style="color:var(--brand)">Take your first test →</a></div>`;
+        return;
+      }
+
+      const total = attempts.length;
+      const avgAcc = Math.round(attempts.reduce((s, a) => s + a.accuracy, 0) / total);
+      const best = Math.max(...attempts.map((a) => Number(a.score)));
+      summary.innerHTML = `
+        <div class="stat"><div class="num">${total}</div><div class="lbl">Tests taken</div></div>
+        <div class="stat"><div class="num">${avgAcc}%</div><div class="lbl">Avg accuracy</div></div>
+        <div class="stat"><div class="num">${best}</div><div class="lbl">Best score</div></div>
+        <div class="stat"><div class="num">${attempts.reduce((s,a)=>s+a.correct,0)}</div><div class="lbl">Correct answers</div></div>`;
+
+      const rows = attempts.map((a) => `
+        <tr>
+          <td>${a.test_title || a.test_id}</td>
+          <td><b>${a.score}</b> / ${a.max_marks}</td>
+          <td style="color:var(--ok)">${a.correct}</td>
+          <td style="color:var(--danger)">${a.wrong}</td>
+          <td>${a.accuracy}%</td>
+          <td>${new Date(a.created_at).toLocaleDateString()}</td>
+        </tr>`).join("");
+      content.innerHTML = `
+        <table class="dash-table">
+          <thead><tr><th>Test</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Accuracy</th><th>Date</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    })();
+  </script>
+</body>
+</html>

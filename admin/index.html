@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Admin Panel | Study Planner Mock</title>
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <!-- Sidebar -->
+    <aside class="admin-side">
+      <a href="../index.html" class="brand">
+        <span class="logo">S</span>
+        <span>STUDY PLANNER<small>ADMIN PANEL</small></span>
+      </a>
+      <nav id="adminNav">
+        <a href="#dashboard" class="active" data-view="dashboard">📊 Dashboard</a>
+        <a href="#exams" data-view="exams">📚 Exams</a>
+        <a href="#tests" data-view="tests">📝 Test Series</a>
+        <a href="#questions" data-view="questions">❓ Questions</a>
+        <a href="../index.html">↩ Back to site</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+      <div id="guardMsg" class="empty" style="margin-top:40px;">Checking access…</div>
+      <div id="adminContent" style="display:none;"></div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <h3 id="modalTitle">Edit</h3>
+      <div id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn ghost sm" id="modalCancel">Cancel</button>
+        <button class="btn sm" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/supabaseClient.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/admin.js"></script>
+</body>
+</html>
