@@ -38,12 +38,12 @@
       </form>
 
       <p class="auth-foot">New here? <a href="signup.html">Create an account</a></p>
+      <p class="auth-foot" style="font-size:12px;opacity:.8;">Demo logins — Student: <b>student@studyplanner.mock</b> / test1234 · Admin: <b>admin@studyplanner.mock</b> / admin123</p>
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/supabaseClient.js"></script>
+  <script src="assets/js/apiClient.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
     (function () {
@@ -52,11 +52,6 @@
       const next = params.get("next") || "index.html";
 
       function showError(msg) { alertEl.textContent = msg; alertEl.className = "alert error show"; }
-
-      if (!window.MMH_CONFIGURED) {
-        alertEl.className = "alert info show";
-        alertEl.textContent = "Demo mode: add your Supabase keys in assets/js/config.js to enable real sign-in.";
-      }
 
       document.getElementById("loginForm").addEventListener("submit", async (e) => {
         e.preventDefault();

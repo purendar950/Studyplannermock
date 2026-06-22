@@ -1,18 +1,13 @@
 /* ============================================================
- *  Mock Matrix Hub — Supabase configuration
+ *  Study Planner Mock — frontend configuration
  *
- *  1. Create a project at https://supabase.com
- *  2. Run  supabase/schema.sql  then  supabase/seed.sql  in the SQL editor
- *  3. Project Settings → API → copy the Project URL and the anon public key
- *  4. Paste them below.
+ *  The site talks to its own backend API (server/). When you run
+ *  `npm start` in server/, the API is served on the same origin,
+ *  so the default "/api" works with no changes.
  *
- *  The anon key is safe to expose in the browser: the database has
- *  Row Level Security enabled with public READ-ONLY access only.
- *
- *  If these are left as placeholders, the app automatically falls back
- *  to the bundled local question bank (demo mode) so it still works.
+ *  Deploying the API elsewhere? Set the full URL, e.g.
+ *    API_BASE: "https://api.yourdomain.com/api"
  * ============================================================ */
 window.MMH_CONFIG = {
-  SUPABASE_URL: "https://YOUR-PROJECT-ref.supabase.co",
-  SUPABASE_ANON_KEY: "YOUR-ANON-PUBLIC-KEY",
+  API_BASE: "/api",
 };

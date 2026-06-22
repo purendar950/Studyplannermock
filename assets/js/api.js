@@ -1,154 +1,62 @@
 /* ============================================================
- *  Mock Matrix Hub — data access layer (server-side via Supabase)
+ *  Study Planner Mock — data access layer (REST API)
  *
- *  All question/test data is fetched from Supabase (PostgREST).
- *  Falls back to the bundled local bank only if Supabase is not
- *  configured, so the demo never breaks.
+ *  Fetches exams/tests/questions from the backend. If the API is
+ *  unreachable (e.g. opened as a static file without the server),
+ *  it falls back to the bundled sample bank so browsing still works.
  * ============================================================ */
 (function () {
-  // Use the shared client created in supabaseClient.js
-  const supabase = window.MMH_SB;
-  const usingServer = !!supabase;
+  const http = window.MMH_HTTP;
+  const hasLocal = typeof CGL_TESTS !== "undefined";
 
-  function shuffle(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
+  function localTests() {
+    return hasLocal ? CGL_TESTS.map((t) => ({ ...t })) : [];
   }
 
-  // ---- Map a DB question row to the shape the test engine expects ----
-  function mapRow(row) {
-    return {
-      q: row.question,
-      options: Array.isArray(row.options) ? row.options : JSON.parse(row.options),
-      answer: row.answer,
-      explain: row.explanation,
-      subject: row.subject,
-    };
-  }
-
-  // ============================================================
-  //  Public API
-  // ============================================================
   const API = {
-    usingServer,
-
-    /* Return the test catalogue for an exam (default: cgl). */
     async getTests(examSlug = "cgl") {
-      if (!usingServer) {
-        return CGL_TESTS.map((t) => ({ ...t }));
+      try {
+        return await http.request(`/tests?exam=${encodeURIComponent(examSlug)}`);
+      } catch (e) {
+        console.warn("API unreachable, using local catalogue:", e.message);
+        return localTests();
       }
-      const { data, error } = await supabase
-        .from("tests")
-        .select("*")
-        .eq("exam_slug", examSlug)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      // normalise DB columns -> UI field names
-      return data.map((t) => ({
-        id: t.id,
-        tier: t.tier,
-        category: t.category,
-        title: t.title,
-        questions: t.questions_count,
-        marks: t.marks,
-        minutes: t.minutes,
-        level: t.level,
-        subject: t.subject,
-        free: t.is_free,
-        isNew: t.is_new,
-      }));
     },
 
-    /* Return a single test row by id. */
     async getTest(id) {
-      const all = await this.getTests();
-      return all.find((t) => t.id === id) || all[0];
+      try {
+        return await http.request(`/tests/${encodeURIComponent(id)}`);
+      } catch (e) {
+        const all = localTests();
+        return all.find((t) => t.id === id) || all[0];
+      }
     },
 
-    /* Fetch questions for a test from the server.
-       For "full" mocks we pull from multiple subjects and mix;
-       otherwise we pull from the test's single subject pool.    */
     async getQuestions(test) {
-      const total = Math.min(test.questions, 20); // demo cap for usability
-
-      if (!usingServer) {
-        // local fallback uses the bundled builder
-        return buildQuestions(test);
+      try {
+        return await http.request(`/tests/${encodeURIComponent(test.id)}/questions`);
+      } catch (e) {
+        if (hasLocal && typeof buildQuestions === "function") return buildQuestions(test);
+        return [];
       }
-
-      let rows = [];
-      if (test.category === "full") {
-        const subs = ["Reasoning", "GK / GA", "Quant", "English"];
-        const per = Math.ceil(total / subs.length);
-        const results = await Promise.all(
-          subs.map((s) =>
-            supabase.from("questions").select("*").eq("subject", s).limit(per)
-          )
-        );
-        results.forEach((r) => {
-          if (r.error) throw r.error;
-          rows = rows.concat(r.data);
-        });
-        rows = rows.slice(0, total);
-      } else {
-        const subject = test.subject;
-        const { data, error } = await supabase
-          .from("questions")
-          .select("*")
-          .eq("subject", subject)
-          .limit(total);
-        if (error) throw error;
-        rows = data;
-        // pad by repeating if the pool is smaller than requested
-        let i = 0;
-        while (rows.length < total && data.length) {
-          rows.push(data[i % data.length]);
-          i++;
-        }
-      }
-
-      return rows.map(mapRow).map((q, i) => ({ ...q, n: i + 1 }));
     },
-  };
 
-  /* Save a completed attempt for the signed-in user. No-op in demo mode. */
-  API.saveAttempt = async function (attempt) {
-    if (!usingServer) return { skipped: true };
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { skipped: true };
-    const { error } = await supabase.from("attempts").insert({
-      user_id: user.id,
-      test_id: attempt.testId,
-      test_title: attempt.testTitle,
-      score: attempt.score,
-      max_marks: attempt.maxMarks,
-      correct: attempt.correct,
-      wrong: attempt.wrong,
-      skipped: attempt.skipped,
-      accuracy: attempt.accuracy,
-      details: attempt.details || null,
-    });
-    if (error) throw error;
-    return { saved: true };
-  };
+    /* Save a completed attempt (requires login). */
+    async saveAttempt(attempt) {
+      if (!http.getToken()) return { skipped: true };
+      try {
+        return await http.request("/attempts", { method: "POST", body: attempt });
+      } catch (e) {
+        console.warn("Could not save attempt:", e.message);
+        return { error: e.message };
+      }
+    },
 
-  /* List the signed-in user's recent attempts. */
-  API.getAttempts = async function (limit = 50) {
-    if (!usingServer) return [];
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-    const { data, error } = await supabase
-      .from("attempts")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return data;
+    /* List the signed-in user's attempts. */
+    async getAttempts() {
+      if (!http.getToken()) return [];
+      return await http.request("/attempts");
+    },
   };
 
   window.MMH_API = API;

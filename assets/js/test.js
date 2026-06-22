@@ -203,10 +203,10 @@
 
   // --- async init: fetch test + questions from the server (Supabase) ---
   async function init() {
-    // Require login when a real backend is configured (demo mode allows through).
+    // Require login before taking a test.
     if (window.MMH_AUTH) {
       const ok = await window.MMH_AUTH.requireAuth("login.html");
-      if (window.MMH_CONFIGURED && !ok) return; // redirected to login
+      if (!ok) return; // redirected to login
     }
 
     els.qText.textContent = "Loading questions…";

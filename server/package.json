@@ -1,0 +1,17 @@
+{
+  "name": "studyplannermock-server",
+  "version": "1.0.0",
+  "description": "Self-contained backend for Study Planner Mock — auth, exams, tests, questions, attempts and admin APIs.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node db.js --reseed"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

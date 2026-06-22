@@ -1,0 +1,10 @@
+# dependencies
+node_modules/
+server/node_modules/
+
+# local database (auto-seeded on first run)
+server/data/
+
+# logs / os
+*.log
+.DS_Store
