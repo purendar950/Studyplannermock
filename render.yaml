@@ -1,5 +1,14 @@
 # One-click deploy to Render (https://render.com).
-# In Render: New +  ->  Blueprint  ->  connect this repo. That's it.
+# In Render: New +  ->  Blueprint  ->  connect this repo.
+# This provisions BOTH a web service and a Postgres database together,
+# so your data (users, attempts, admin changes) persists permanently.
+
+databases:
+  - name: studyplanner-db
+    plan: free
+    databaseName: studyplanner
+    user: studyplanner
+
 services:
   - type: web
     name: studyplannermock
@@ -10,11 +19,15 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
-      - key: NODE_VERSION
-        value: "22"
-      - key: JWT_SECRET
-        generateValue: true        # Render generates a strong secret
+      - key: DATABASE_URL              # auto-filled from the database above
+        fromDatabase:
+          name: studyplanner-db
+          property: connectionString
+      - key: JWT_SECRET                # Render generates a strong secret
+        generateValue: true
       - key: ADMIN_EMAIL
         value: admin@studyplanner.mock
-      - key: ADMIN_PASSWORD
-        sync: false                # Render prompts you to enter this on deploy
+      - key: ADMIN_PASSWORD            # Render prompts you to enter this on deploy
+        sync: false
+      - key: NODE_VERSION
+        value: "22"
