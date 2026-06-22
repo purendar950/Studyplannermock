@@ -1,0 +1,14 @@
+{
+  "name": "studyplannermock",
+  "version": "1.0.0",
+  "description": "Study Planner Mock — full mock-test platform (frontend + Node API).",
+  "private": true,
+  "scripts": {
+    "start": "node server/server.js",
+    "seed": "node server/db.js --reseed",
+    "postinstall": "npm install --prefix server"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
