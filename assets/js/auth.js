@@ -1,108 +1,88 @@
 /* ============================================================
- *  Study Planner Mock — Authentication layer (Supabase Auth)
+ *  Study Planner Mock — Authentication layer (REST + JWT)
  *
- *  Exposes window.MMH_AUTH with sign up / in / out, session +
- *  admin checks, route guards, and a navbar auth widget.
+ *  Talks to the backend API (server/). Stores the JWT in
+ *  localStorage and exposes sign up / in / out, session + admin
+ *  checks, route guards, and a navbar auth widget.
  * ============================================================ */
 (function () {
-  const sb = window.MMH_SB;
-  const configured = window.MMH_CONFIGURED;
-
-  let _profile = null; // cached profile row {id,email,full_name,is_admin}
+  const http = window.MMH_HTTP;
+  let _user = null;     // cached current user
+  let _loaded = false;  // whether we've resolved the session once
 
   const AUTH = {
-    configured,
-
-    async getSession() {
-      if (!configured) return null;
-      const { data } = await sb.auth.getSession();
-      return data.session;
-    },
-
-    async getUser() {
-      if (!configured) return null;
-      const { data } = await sb.auth.getUser();
-      return data.user;
-    },
-
-    async getProfile(force) {
-      if (!configured) return null;
-      if (_profile && !force) return _profile;
-      const user = await this.getUser();
-      if (!user) return null;
-      const { data } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      _profile = data || { id: user.id, email: user.email, is_admin: false };
-      return _profile;
+    /* Resolve and cache the current user (null if signed out). */
+    async getUser(force) {
+      if (_loaded && !force) return _user;
+      const token = http.getToken();
+      if (!token) { _user = null; _loaded = true; return null; }
+      try {
+        const { user } = await http.request("/auth/me");
+        _user = user;
+      } catch (e) {
+        _user = null;
+        if (e.status === 401) http.setToken(null); // stale token
+      }
+      _loaded = true;
+      return _user;
     },
 
     async isAdmin() {
-      const p = await this.getProfile();
-      return !!(p && p.is_admin);
+      const u = await this.getUser();
+      return !!(u && u.is_admin);
     },
 
     async signUp(email, password, fullName) {
-      if (!configured) throw new Error("Backend not configured. Add Supabase keys in assets/js/config.js.");
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName || "" } },
+      const data = await http.request("/auth/signup", {
+        method: "POST",
+        body: { email, password, full_name: fullName || "" },
       });
-      if (error) throw error;
+      http.setToken(data.token);
+      _user = data.user; _loaded = true;
       return data;
     },
 
     async signIn(email, password) {
-      if (!configured) throw new Error("Backend not configured. Add Supabase keys in assets/js/config.js.");
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      _profile = null;
+      const data = await http.request("/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      http.setToken(data.token);
+      _user = data.user; _loaded = true;
       return data;
     },
 
     async signOut() {
-      if (!configured) return;
-      await sb.auth.signOut();
-      _profile = null;
+      http.setToken(null);
+      _user = null; _loaded = true;
     },
 
-    /* Guard: redirect to login if not authenticated. Returns user or null. */
-    async requireAuth(redirect) {
-      if (!configured) return null; // demo mode: allow through
+    /* Guard: redirect to login if not authenticated. */
+    async requireAuth(loginPath) {
       const user = await this.getUser();
       if (!user) {
         const next = encodeURIComponent(location.pathname + location.search);
-        location.href = `${redirect || "login.html"}?next=${next}`;
+        location.href = `${loginPath || "login.html"}?next=${next}`;
         return null;
       }
       return user;
     },
 
-    /* Guard: require an admin. Redirects non-admins. */
+    /* Guard: require an admin; redirect otherwise. */
     async requireAdmin(loginPath, homePath) {
-      if (!configured) return true; // demo mode: allow through so the UI is viewable
       const user = await this.getUser();
       if (!user) { location.href = loginPath || "../login.html"; return false; }
-      const admin = await this.isAdmin();
-      if (!admin) { location.href = homePath || "../index.html"; return false; }
+      if (!user.is_admin) { location.href = homePath || "../index.html"; return false; }
       return true;
     },
   };
 
-  /* ---- Navbar auth widget: renders into an element with id="authSlot" ---- */
+  /* ---- Navbar auth widget: renders into id="authSlot" ---- */
   AUTH.renderNav = async function (opts) {
     opts = opts || {};
-    const base = opts.base || ""; // path prefix to site root, e.g. "../../"
+    const base = opts.base || "";
     const slot = document.getElementById("authSlot");
     if (!slot) return;
-
-    if (!configured) {
-      slot.innerHTML = `<a href="${base}login.html" class="btn sm ghost">Sign in</a>`;
-      return;
-    }
 
     const user = await this.getUser();
     if (!user) {
@@ -112,21 +92,18 @@
       return;
     }
 
-    const profile = await this.getProfile();
-    const admin = profile && profile.is_admin;
-    const name = (profile && (profile.full_name || profile.email)) || user.email;
+    const name = user.full_name || user.email;
     const initial = (name || "U").trim().charAt(0).toUpperCase();
-
     slot.innerHTML = `
       <div class="user-menu">
         <button class="avatar" id="avatarBtn" title="${name}">${initial}</button>
         <div class="menu" id="userMenu" hidden>
           <div class="menu-head">
             <strong>${name}</strong>
-            <span>${user.email}${admin ? " · Admin" : ""}</span>
+            <span>${user.email}${user.is_admin ? " · Admin" : ""}</span>
           </div>
           <a href="${base}dashboard.html">My Attempts</a>
-          ${admin ? `<a href="${base}admin/index.html">Admin Panel</a>` : ""}
+          ${user.is_admin ? `<a href="${base}admin/index.html">Admin Panel</a>` : ""}
           <button id="logoutBtn">Sign out</button>
         </div>
       </div>`;

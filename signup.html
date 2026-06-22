@@ -45,35 +45,25 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/supabaseClient.js"></script>
+  <script src="assets/js/apiClient.js"></script>
   <script src="assets/js/auth.js"></script>
   <script>
     (function () {
       const alertEl = document.getElementById("alert");
       function show(cls, msg) { alertEl.className = "alert " + cls + " show"; alertEl.textContent = msg; }
 
-      if (!window.MMH_CONFIGURED) {
-        show("info", "Demo mode: add your Supabase keys in assets/js/config.js to enable real sign-up.");
-      }
-
       document.getElementById("signupForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const btn = document.getElementById("submitBtn");
         btn.disabled = true; btn.textContent = "Creating…";
         try {
-          const res = await window.MMH_AUTH.signUp(
+          await window.MMH_AUTH.signUp(
             document.getElementById("email").value.trim(),
             document.getElementById("password").value,
             document.getElementById("name").value.trim()
           );
-          if (res.session) {
-            location.href = "index.html";
-          } else {
-            show("ok", "Account created! Check your email to confirm, then sign in.");
-            btn.textContent = "Account created";
-          }
+          location.href = "index.html";
         } catch (err) {
           show("error", err.message || "Sign up failed.");
           btn.disabled = false; btn.textContent = "Create account";
