@@ -165,6 +165,17 @@ const store = {
       [qst.subject, qst.question, JSON.stringify(qst.options), qst.answer, qst.explanation]);
     return rows[0];
   },
+  async addQuestionsBulk(arr) {
+    if (!arr.length) return [];
+    const tuples = [];
+    const params = [];
+    let i = 1;
+    for (const item of arr) {
+      tuples.push(`($${i++},$${i++},$${i++},$${i++},$${i++})`);
+      params.push(item.subject, item.question, JSON.stringify(item.options), item.answer, item.explanation);
+    }
+    return q(`insert into questions (subject,question,options,answer,explanation) values ${tuples.join(",")} returning *`, params);
+  },
   async updateQuestion(id, patch) {
     const sets = [], vals = [Number(id)];
     ["subject", "question", "answer", "explanation"].forEach((c) => {

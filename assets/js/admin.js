@@ -186,7 +186,12 @@
     const questions = await fetchQuestions(qFilter);
     const opts = (val) => SUBJECTS.map((s) => `<option value="${s}" ${s === val ? "selected" : ""}>${s}</option>`).join("");
     content.innerHTML = `
-      <div class="admin-head"><h1>Questions</h1><button class="btn sm" id="addQ">+ Add Question</button></div>
+      <div class="admin-head"><h1>Questions</h1>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost sm" id="bulkQ">⬆ Bulk upload</button>
+          <button class="btn sm" id="addQ">+ Add Question</button>
+        </div>
+      </div>
       <div class="toolbar">
         <label style="color:var(--muted);font-weight:700;font-size:13px;">Filter by subject:</label>
         <select class="input" id="qFilter" style="width:auto;"><option value="">All</option>${opts(qFilter)}</select>
@@ -208,6 +213,7 @@
       </table>`;
     $("qFilter").addEventListener("change", (e) => { qFilter = e.target.value; viewQuestions(); });
     $("addQ").addEventListener("click", () => questionForm());
+    $("bulkQ").addEventListener("click", () => bulkForm());
     content.querySelectorAll("[data-edit]").forEach((b) =>
       b.addEventListener("click", () => questionForm(questions.find((x) => String(x.id) === b.dataset.edit))));
     content.querySelectorAll("[data-del]").forEach((b) =>
@@ -239,6 +245,108 @@
         if (row) await http.request(`/admin/questions/${row.id}`, { method: "PUT", body: payload });
         else await http.request("/admin/questions", { method: "POST", body: payload });
       });
+  }
+
+  // ---------- CSV bulk upload ----------
+  // Robust CSV parser: handles quoted fields, embedded commas/newlines, "" escapes.
+  function parseCSV(text) {
+    const rows = [];
+    let cur = [], field = "", inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+        else field += c;
+      } else if (c === '"') { inQ = true; }
+      else if (c === ",") { cur.push(field); field = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        cur.push(field); field = "";
+        if (cur.some((x) => x !== "")) rows.push(cur);
+        cur = [];
+      } else field += c;
+    }
+    if (field !== "" || cur.length) { cur.push(field); if (cur.some((x) => x !== "")) rows.push(cur); }
+    return rows;
+  }
+
+  // Map parsed rows -> question objects, collecting per-row errors.
+  function rowsToQuestions(rows) {
+    const out = [], errors = [];
+    let start = 0;
+    if (rows.length && /^subject$/i.test(String(rows[0][0] || "").trim())) start = 1; // skip header
+    for (let r = start; r < rows.length; r++) {
+      const cells = rows[r];
+      if (!cells.some((c) => String(c).trim())) continue; // blank line
+      const lineNo = r + 1;
+      const subject = String(cells[0] || "").trim();
+      const question = String(cells[1] || "").trim();
+      const opts = [cells[2], cells[3], cells[4], cells[5]].map((x) => (x == null ? "" : String(x).trim()));
+      const ansRaw = String(cells[6] || "").trim();
+      const explanation = String(cells[7] || "").trim();
+      let ansIdx = -1;
+      if (/^[A-Da-d]$/.test(ansRaw)) ansIdx = "ABCD".indexOf(ansRaw.toUpperCase());
+      else if (/^[1-4]$/.test(ansRaw)) ansIdx = Number(ansRaw) - 1;
+      const problems = [];
+      if (!question) problems.push("question");
+      if (opts.some((o) => !o)) problems.push("4 options");
+      if (ansIdx < 0) problems.push("answer (A-D)");
+      if (problems.length) { errors.push(`Row ${lineNo}: missing ${problems.join(", ")}`); continue; }
+      out.push({ subject: subject || "Quant", question, options: opts, answer: ansIdx, explanation });
+    }
+    return { questions: out, errors };
+  }
+
+  const TEMPLATE_CSV =
+    "subject,question,optionA,optionB,optionC,optionD,answer,explanation\n" +
+    'Quant,"If 20% of a number is 50, the number is?",200,250,150,300,B,"0.20x = 50 so x = 250"\n' +
+    'Reasoning,"Find the missing number: 2, 6, 12, 20, 30, ?",38,40,42,44,C,"Differences are 4,6,8,10,12"\n';
+
+  function bulkForm() {
+    openModal("Bulk upload questions", `
+      <p style="color:var(--muted);font-size:13px;margin-top:0;">
+        Upload a <b>CSV</b> with columns:
+        <code>subject, question, optionA, optionB, optionC, optionD, answer, explanation</code>.
+        <b>answer</b> is the correct option letter (A, B, C or D).
+        <a href="#" id="dlTemplate" style="color:var(--brand);font-weight:700;">Download template</a>
+      </p>
+      <div class="field full"><label>CSV file</label>
+        <input type="file" id="bulkFile" accept=".csv,text/csv,text/plain" class="input"></div>
+      <div class="field full"><label>…or paste CSV rows here</label>
+        <textarea class="input" id="bulkText" style="min-height:150px;font-family:monospace;font-size:12px;"
+          placeholder="subject,question,optionA,optionB,optionC,optionD,answer,explanation"></textarea></div>
+      <div id="bulkInfo" style="font-size:13px;color:var(--muted);min-height:20px;"></div>
+    `, async () => {
+      const parsed = rowsToQuestions(parseCSV($("bulkText").value));
+      if (!parsed.questions.length) throw new Error("No valid questions found." + (parsed.errors.length ? ` ${parsed.errors.length} row error(s).` : ""));
+      const res = await http.request("/admin/questions/bulk", { method: "POST", body: { questions: parsed.questions } });
+      alert(`Imported ${res.inserted} question(s).` + (res.failed ? `\n${res.failed} row(s) skipped.` : ""));
+    });
+
+    const updateInfo = () => {
+      const { questions, errors } = rowsToQuestions(parseCSV($("bulkText").value));
+      $("bulkInfo").innerHTML =
+        `<b style="color:var(--ok)">${questions.length}</b> valid · ` +
+        `<b style="color:${errors.length ? "var(--danger)" : "var(--muted)"}">${errors.length}</b> error(s)` +
+        (errors.length ? `<br>${errors.slice(0, 5).map(esc).join("<br>")}${errors.length > 5 ? "<br>…" : ""}` : "");
+    };
+
+    $("bulkFile").addEventListener("change", () => {
+      const f = $("bulkFile").files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { $("bulkText").value = rd.result; updateInfo(); };
+      rd.readAsText(f);
+    });
+    $("bulkText").addEventListener("input", updateInfo);
+    $("dlTemplate").addEventListener("click", (e) => {
+      e.preventDefault();
+      const blob = new Blob([TEMPLATE_CSV], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "questions-template.csv"; a.click();
+      URL.revokeObjectURL(url);
+    });
   }
 
   async function deleteRow(table, value, label) {

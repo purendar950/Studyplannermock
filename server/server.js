@@ -235,6 +235,36 @@ app.post("/api/admin/questions", admin, wrap(async (req, res) => {
     answer: Number(b.answer) || 0, explanation: b.explanation || "",
   }));
 }));
+app.post("/api/admin/questions/bulk", admin, wrap(async (req, res) => {
+  const list = Array.isArray(req.body && req.body.questions) ? req.body.questions : null;
+  if (!list) return res.status(400).json({ error: "A 'questions' array is required" });
+  if (list.length > 2000) return res.status(400).json({ error: "Too many rows (max 2000 per upload)" });
+
+  const valid = [];
+  const errors = [];
+  list.forEach((item, idx) => {
+    const row = idx + 1;
+    if (!item || typeof item.question !== "string" || !item.question.trim()) {
+      return errors.push(`Row ${row}: missing question`);
+    }
+    if (!Array.isArray(item.options) || item.options.length !== 4 || item.options.some((o) => !String(o).trim())) {
+      return errors.push(`Row ${row}: needs 4 non-empty options`);
+    }
+    const ans = Number(item.answer);
+    if (!(ans >= 0 && ans <= 3)) return errors.push(`Row ${row}: answer must be A-D`);
+    valid.push({
+      subject: (item.subject && String(item.subject).trim()) || "Quant",
+      question: item.question.trim(),
+      options: item.options.map((o) => String(o)),
+      answer: ans,
+      explanation: item.explanation ? String(item.explanation) : "",
+    });
+  });
+
+  let inserted = [];
+  if (valid.length) inserted = await store.addQuestionsBulk(valid);
+  res.status(201).json({ inserted: inserted.length, failed: errors.length, errors: errors.slice(0, 50) });
+}));
 app.put("/api/admin/questions/:id", admin, wrap(async (req, res) => {
   const b = req.body || {};
   const patch = {};

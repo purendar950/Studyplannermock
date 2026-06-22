@@ -94,6 +94,13 @@ const store = {
     const row = { ...q, id: nextId };
     db.questions.push(row); persist(); return row;
   },
+  async addQuestionsBulk(arr) {
+    let nextId = db.questions.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+    const rows = arr.map((q) => ({ ...q, id: nextId++ }));
+    db.questions.push(...rows);
+    persist();
+    return rows;
+  },
   async updateQuestion(id, patch) {
     const q = db.questions.find((x) => x.id === Number(id));
     if (!q) return null;
