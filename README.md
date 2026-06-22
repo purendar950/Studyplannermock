@@ -4,7 +4,8 @@ A complete, runnable mock-test platform (SSC CGL and more) with user
 authentication, saved attempts, and an admin panel — backed by its own REST API.
 
 - **Frontend**: static HTML/CSS/JS (no build step)
-- **Backend**: Node + Express, JWT auth, file-backed database (zero native deps)
+- **Backend**: Node + Express, JWT auth, pluggable storage (Postgres in
+  production, zero-config file store locally)
 - **Auth**: signup / login / logout with hashed passwords + JWT sessions
 - **Admin panel**: role-secured CRUD for exams, test series and questions
 - **Attempts**: every completed test is saved per user and shown on a dashboard
@@ -54,7 +55,11 @@ student (or sign up) to take tests and see your results on **/dashboard.html**.
 │       └── data.js         # offline fallback sample bank
 ├── server/
 │   ├── server.js           # Express app + REST API
-│   ├── db.js               # file-backed store + seed
+│   ├── store.js            # picks Postgres (DATABASE_URL) or file store
+│   ├── store-postgres.js   # Postgres-backed store (pg)
+│   ├── store-file.js       # zero-config file store (data/db.json)
+│   ├── seed-data.js        # shared seed (exams/tests/questions/users)
+│   ├── seed.js             # `npm run seed` CLI
 │   └── package.json
 └── supabase/               # OPTIONAL: SQL to run on Supabase instead
 ```
@@ -87,15 +92,17 @@ Auth is sent as `Authorization: Bearer <token>`. Admin routes require the
 This is a Node app that serves both the API and the frontend, so it deploys as
 a **single web service**. Two easy options:
 
-### Option A — Render (free, one click)
+### Option A — Render (free, one click, with a database)
 
 1. Push this repo to GitHub (already done).
 2. Go to <https://render.com> → **New +** → **Blueprint** → connect this repo.
-   Render reads [`render.yaml`](./render.yaml) automatically.
+   Render reads [`render.yaml`](./render.yaml) automatically and provisions
+   **both a web service and a free Postgres database**.
 3. When prompted, set **ADMIN_PASSWORD** (the admin login password). `JWT_SECRET`
-   is generated for you.
+   and `DATABASE_URL` are wired up for you.
 4. Click **Apply**. In ~2 minutes you get a live URL like
-   `https://studyplannermock.onrender.com` — the full app (auth, tests, admin).
+   `https://studyplannermock.onrender.com` — the full app (auth, tests, admin)
+   with **data that persists** across redeploys.
 
 > One-click button (replace the URL if you fork):
 > [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/purendar950/Studyplannermock)
@@ -112,16 +119,19 @@ docker run -p 3000:3000 -e ADMIN_PASSWORD=yourpass -e JWT_SECRET=$(openssl rand 
 
 ### Environment variables
 
-| Variable         | Purpose                              | Default                      |
-|------------------|--------------------------------------|------------------------------|
-| `PORT`           | Port to listen on (set by the host)  | `3000`                       |
-| `JWT_SECRET`     | Secret for signing sessions          | dev fallback (set in prod!)  |
-| `ADMIN_EMAIL`    | Seeded admin email                   | `admin@studyplanner.mock`    |
-| `ADMIN_PASSWORD` | Seeded admin password                | `admin123` (change it!)      |
+| Variable         | Purpose                                   | Default                      |
+|------------------|-------------------------------------------|------------------------------|
+| `PORT`           | Port to listen on (set by the host)       | `3000`                       |
+| `DATABASE_URL`   | Postgres connection string. **If set, the app uses Postgres; otherwise it uses the local file store.** | _(unset → file store)_ |
+| `PGSSL`          | Set to `disable` for a local Postgres without SSL | _(SSL on)_           |
+| `JWT_SECRET`     | Secret for signing sessions               | dev fallback (set in prod!)  |
+| `ADMIN_EMAIL`    | Seeded admin email                        | `admin@studyplanner.mock`    |
+| `ADMIN_PASSWORD` | Seeded admin password                     | `admin123` (change it!)      |
 
-> **Note on data:** the bundled file store resets on each redeploy (fine for a
-> demo). For permanent accounts/attempts, attach a persistent disk or swap
-> `server/db.js` for Postgres — happy to wire that up next.
+> **Storage:** with no `DATABASE_URL` the app uses a zero-config file store
+> (`server/data/db.json`) — perfect for local dev. The Render blueprint sets
+> `DATABASE_URL` to a managed Postgres, so accounts, attempts and admin changes
+> **persist permanently**. Re-seed any time with `npm run seed`.
 
 ### Hosting the frontend separately (optional)
 
