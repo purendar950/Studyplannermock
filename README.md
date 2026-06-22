@@ -82,13 +82,52 @@ Base URL: `/api` (same origin when served by the Node server).
 Auth is sent as `Authorization: Bearer <token>`. Admin routes require the
 `admin` role; others are rejected with 401/403.
 
-## Deploying
+## Deploying (make it live)
 
-- **Backend**: deploy `server/` to any Node host (Render, Railway, Fly, a VPS).
-  Set `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
-- **Frontend**: it's served by the Node server by default. To host the static
-  files separately (e.g. Cloudflare Pages), set `API_BASE` in
-  `assets/js/config.js` to your deployed API URL and enable CORS (already on).
+This is a Node app that serves both the API and the frontend, so it deploys as
+a **single web service**. Two easy options:
+
+### Option A — Render (free, one click)
+
+1. Push this repo to GitHub (already done).
+2. Go to <https://render.com> → **New +** → **Blueprint** → connect this repo.
+   Render reads [`render.yaml`](./render.yaml) automatically.
+3. When prompted, set **ADMIN_PASSWORD** (the admin login password). `JWT_SECRET`
+   is generated for you.
+4. Click **Apply**. In ~2 minutes you get a live URL like
+   `https://studyplannermock.onrender.com` — the full app (auth, tests, admin).
+
+> One-click button (replace the URL if you fork):
+> [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/purendar950/Studyplannermock)
+
+### Option B — Any container host (Docker)
+
+A [`Dockerfile`](./Dockerfile) is included. Build and run anywhere
+(Railway, Fly.io, Google Cloud Run, a VPS):
+
+```bash
+docker build -t studyplannermock .
+docker run -p 3000:3000 -e ADMIN_PASSWORD=yourpass -e JWT_SECRET=$(openssl rand -hex 32) studyplannermock
+```
+
+### Environment variables
+
+| Variable         | Purpose                              | Default                      |
+|------------------|--------------------------------------|------------------------------|
+| `PORT`           | Port to listen on (set by the host)  | `3000`                       |
+| `JWT_SECRET`     | Secret for signing sessions          | dev fallback (set in prod!)  |
+| `ADMIN_EMAIL`    | Seeded admin email                   | `admin@studyplanner.mock`    |
+| `ADMIN_PASSWORD` | Seeded admin password                | `admin123` (change it!)      |
+
+> **Note on data:** the bundled file store resets on each redeploy (fine for a
+> demo). For permanent accounts/attempts, attach a persistent disk or swap
+> `server/db.js` for Postgres — happy to wire that up next.
+
+### Hosting the frontend separately (optional)
+
+If you prefer the static frontend on a CDN (e.g. Cloudflare Pages) and the API
+elsewhere, set `API_BASE` in `assets/js/config.js` to your API URL. CORS is
+already enabled on the server.
 
 ## Alternative: Supabase backend
 

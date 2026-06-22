@@ -1,0 +1,20 @@
+# One-click deploy to Render (https://render.com).
+# In Render: New +  ->  Blueprint  ->  connect this repo. That's it.
+services:
+  - type: web
+    name: studyplannermock
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true        # Render generates a strong secret
+      - key: ADMIN_EMAIL
+        value: admin@studyplanner.mock
+      - key: ADMIN_PASSWORD
+        sync: false                # Render prompts you to enter this on deploy
