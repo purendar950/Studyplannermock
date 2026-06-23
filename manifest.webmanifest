@@ -1,6 +1,6 @@
 {
-  "name": "Study Planner Mock",
-  "short_name": "SPM",
+  "name": "Mock Matrix Hub",
+  "short_name": "MMH",
   "description": "Free exam-pattern mock tests with sectional timing, instant results and detailed analysis.",
   "start_url": "./index.html",
   "scope": "./",
