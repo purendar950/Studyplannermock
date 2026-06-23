@@ -22,23 +22,15 @@
             <input type="text" id="mockSearch" placeholder="Search by mock name..." onkeyup="renderMocks()">
         </div>
 
-        <div class="filter-scroll-wrapper" id="category-wrap"></div>
-
         <div class="filter-scroll-wrapper" id="tier-wrap">
             <div class="pill-filter active" onclick="setTier('tier1', this)">Tier I</div>
             <div class="pill-filter" onclick="setTier('tier2', this)">Tier II</div>
         </div>
 
-        <div class="filter-scroll-wrapper" id="year-scroll"></div>
-
         <div class="filter-scroll-wrapper" id="type-filters">
             <div class="pill-filter active" onclick="filterType('full_mocks', this)">Full Mocks</div>
             <div class="pill-filter" onclick="filterType('sectional', this)">Sectionals</div>
             <div class="pill-filter" onclick="filterType('subject_wise', this)">Subject Wise</div>
-        </div>
-
-        <div class="filter-scroll-wrapper hidden" id="section-wrap">
-            <div id="section-scroll" class="d-flex gap-2"></div>
         </div>
     </div>
 
@@ -48,12 +40,11 @@
     </div>
 </div>
 
+<script src="../../assets/js/data.js"></script>
 <script src="../exam-engine.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('mmh_theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
+        if (localStorage.getItem('mmh_theme') === 'dark') document.body.classList.add('dark-mode');
         initExamEngine();
     });
 </script>
