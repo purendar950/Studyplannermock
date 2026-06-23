@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading Test... | MOCK MATRIX HUB</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --primary:#2563eb; --primary-dark:#1e40af; --green:#16a34a; --red:#ef4444; --orange:#f59e0b;
+         --purple:#7c3aed; --border:#e2e8f0; --grey:#64748b; --bg:#f1f5f9; --white:#fff; --text:#0f172a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  body.dark-mode{ --bg:#020617; --white:#1e293b; --border:#334155; --grey:#94a3b8; --text:#f1f5f9; background:#020617; color:#f1f5f9; }
+  .hidden{ display:none !important; }
+  button{ font-family:inherit; }
+
+  /* ---------- Loading ---------- */
+  #loadingOverlay{ position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200; }
+  .spinner{ width:48px; height:48px; border:5px solid #cbd5e1; border-top-color:var(--primary); border-radius:50%; animation:spin 0.9s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+
+  /* ---------- Welcome ---------- */
+  .welcome-screen{ max-width:820px; margin:0 auto; padding:24px 16px 60px; }
+  .ws-card{ background:var(--white); border:1px solid var(--border); border-radius:16px; padding:26px; box-shadow:0 4px 16px rgba(0,0,0,0.05); }
+  .ws-logo{ display:flex; align-items:center; gap:10px; font-weight:800; color:var(--primary); margin-bottom:8px; }
+  .ws-logo .mk{ width:34px; height:34px; border-radius:9px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; }
+  .ws-title{ font-size:1.35rem; font-weight:800; margin:4px 0 2px; }
+  .ws-sub{ color:var(--grey); font-size:0.85rem; margin-bottom:18px; }
+  .ws-detail{ list-style:none; padding:0; margin:0 0 18px; }
+  .ws-detail li{ padding:9px 0; border-bottom:1px dashed var(--border); font-weight:600; display:flex; justify-content:space-between; }
+  .ws-detail li span:last-child{ color:var(--primary); font-weight:800; }
+  .ws-table{ width:100%; border-collapse:collapse; margin-bottom:8px; }
+  .ws-table th,.ws-table td{ border:1px solid var(--border); padding:9px 12px; font-size:0.85rem; text-align:center; }
+  .ws-table th{ background:var(--bg); font-weight:800; }
+  .ws-table td:first-child,.ws-table th:first-child{ text-align:left; }
+  .ws-instr{ font-size:0.88rem; line-height:1.7; color:var(--text); }
+  .ws-instr b{ color:var(--primary-dark); }
+  .leg-row{ display:flex; align-items:center; gap:10px; margin:7px 0; font-size:0.85rem; }
+  .leg-chip{ width:26px; height:26px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:0.75rem; flex-shrink:0; }
+  .ws-actions{ display:flex; justify-content:space-between; gap:10px; margin-top:22px; flex-wrap:wrap; }
+  .ws-confirm{ display:flex; gap:10px; align-items:flex-start; background:var(--bg); border-radius:10px; padding:12px; margin-top:16px; font-size:0.85rem; }
+  .btn{ border:none; border-radius:9px; padding:11px 22px; font-weight:800; font-size:0.88rem; cursor:pointer; }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:disabled{ background:#94a3b8; cursor:not-allowed; }
+  .btn-ghost{ background:var(--white); color:var(--primary); border:1px solid var(--primary); }
+  .ws-select{ padding:8px 12px; border-radius:8px; border:1px solid var(--border); font-weight:600; background:var(--white); color:var(--text); }
+
+  /* ---------- Exam header ---------- */
+  #mainHeader{ background:var(--white); border-bottom:2px solid var(--primary); position:sticky; top:0; z-index:50; }
+  .hdr-top{ display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:10px; }
+  .hdr-title{ font-weight:800; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hdr-right{ display:flex; align-items:center; gap:8px; }
+  .hdr-icon-btn{ background:var(--bg); border:1px solid var(--border); border-radius:8px; width:38px; height:36px; cursor:pointer; color:var(--text); font-size:0.95rem; }
+  .hdr-timer{ display:flex; align-items:center; gap:6px; background:#eff6ff; color:var(--primary); font-weight:800; padding:7px 12px; border-radius:8px; font-variant-numeric:tabular-nums; }
+  .hdr-timer.low{ background:#fef2f2; color:var(--red); }
+  .hdr-user{ font-size:0.78rem; color:var(--grey); font-weight:700; }
+  .sec-tabs{ display:flex; overflow-x:auto; border-top:1px solid var(--border); background:var(--white); }
+  .sec-tab{ white-space:nowrap; padding:9px 16px; font-weight:700; font-size:0.8rem; color:var(--grey); cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; }
+  .sec-tab.active{ color:var(--primary); border-bottom-color:var(--primary); background:var(--bg); }
+
+  /* ---------- Body ---------- */
+  .exam-body{ display:flex; align-items:flex-start; }
+  .q-panel{ flex:1; min-width:0; padding:16px 18px 96px; }
+  .q-meta{ display:flex; justify-content:space-between; align-items:center; gap:10px; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .q-no{ font-weight:800; }
+  .q-marks{ font-size:0.8rem; } .q-marks .pos{ color:var(--green); font-weight:800; } .q-marks .neg{ color:var(--red); font-weight:800; }
+  .q-text{ font-size:1.04rem; line-height:1.65; font-weight:600; margin-bottom:18px; }
+  .opt{ display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; cursor:pointer; background:var(--white); }
+  .opt:hover{ border-color:var(--primary); }
+  .opt.selected{ border-color:var(--primary); background:#eff6ff; }
+  body.dark-mode .opt.selected{ background:#0b2447; }
+  .opt .bullet{ width:28px; height:28px; border-radius:50%; border:2px solid var(--grey); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.82rem; flex-shrink:0; }
+  .opt.selected .bullet{ border-color:var(--primary); background:var(--primary); color:#fff; }
+
+  .action-bar{ position:fixed; bottom:0; left:0; right:320px; background:var(--white); border-top:1px solid var(--border); padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap; z-index:40; }
+  .btn-sm{ border-radius:8px; padding:9px 14px; font-weight:700; font-size:0.82rem; cursor:pointer; border:1px solid var(--border); background:var(--white); color:var(--text); }
+  .btn-mark{ color:var(--purple); border-color:var(--purple); }
+  .btn-next{ background:var(--green); color:#fff; border-color:var(--green); }
+  .btn-submit{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .ab-spacer{ flex:1; }
+
+  /* ---------- Palette ---------- */
+  .palette{ width:320px; flex-shrink:0; background:var(--white); border-left:1px solid var(--border); min-height:calc(100vh - 50px); padding:14px; }
+  .pal-cand{ display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  .pal-cand .av{ width:42px; height:42px; border-radius:50%; background:#eff6ff; color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+  .legend{ display:grid; grid-template-columns:1fr 1fr; gap:7px 10px; font-size:0.72rem; margin-bottom:14px; }
+  .legend span{ display:flex; align-items:center; gap:6px; }
+  .lg{ width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:0.66rem; font-weight:800; }
+  .lg-ans{ background:var(--green); } .lg-na{ background:var(--red); } .lg-nv{ background:#cbd5e1; color:#475569; }
+  .lg-mk{ background:var(--purple); } .lg-mka{ background:var(--purple); position:relative; }
+  .pal-sec-name{ font-weight:800; font-size:0.74rem; color:var(--grey); margin:12px 0 8px; text-transform:uppercase; }
+  .pal-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .pal-btn{ aspect-ratio:1; border:none; border-radius:8px; font-weight:700; font-size:0.82rem; cursor:pointer; background:#cbd5e1; color:#475569; position:relative; }
+  .pal-btn.ans{ background:var(--green); color:#fff; }
+  .pal-btn.na{ background:var(--red); color:#fff; }
+  .pal-btn.mk{ background:var(--purple); color:#fff; }
+  .pal-btn.mka{ background:var(--purple); color:#fff; }
+  .pal-btn.mka::after{ content:''; position:absolute; bottom:3px; right:3px; width:8px; height:8px; border-radius:50%; background:var(--green); border:1px solid #fff; }
+  .pal-btn.cur{ outline:3px solid var(--primary); outline-offset:1px; }
+
+  /* ---------- Modal ---------- */
+  .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:100; padding:18px; }
+  .modal-card{ background:var(--white); border-radius:16px; padding:24px; max-width:460px; width:100%; }
+  .sum-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:16px 0; }
+  .sum-item{ background:var(--bg); border-radius:10px; padding:12px; text-align:center; }
+  .sum-item .v{ font-size:1.3rem; font-weight:800; } .sum-item .l{ font-size:0.7rem; color:var(--grey); font-weight:700; }
+
+  /* ---------- Result ---------- */
+  #resultView{ max-width:920px; margin:0 auto; padding:20px 16px 70px; }
+  .res-hero{ background:var(--white); border-radius:16px; padding:24px; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.05); margin-bottom:16px; }
+  .res-score{ font-size:2.6rem; font-weight:800; color:var(--primary); }
+  .res-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  .stat{ background:var(--white); border-radius:14px; padding:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+  .stat .v{ font-size:1.5rem; font-weight:800; } .stat .l{ font-size:0.7rem; color:var(--grey); font-weight:700; text-transform:uppercase; }
+  .sec-table{ width:100%; border-collapse:collapse; background:var(--white); border-radius:14px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:20px; }
+  .sec-table th,.sec-table td{ padding:11px 12px; text-align:center; font-size:0.85rem; border-bottom:1px solid var(--border); }
+  .sec-table th{ background:var(--bg); font-weight:800; }
+  .sec-table td:first-child,.sec-table th:first-child{ text-align:left; }
+  .rev-q{ background:var(--white); border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+  .rev-head{ display:flex; justify-content:space-between; font-size:0.74rem; font-weight:700; color:var(--grey); margin-bottom:8px; }
+  .rev-opt{ padding:8px 12px; border-radius:8px; margin:5px 0; font-size:0.9rem; border:1px solid var(--border); }
+  .rev-opt.correct{ background:#dcfce7; border-color:var(--green); }
+  .rev-opt.wrong{ background:#fee2e2; border-color:var(--red); }
+  body.dark-mode .rev-opt.correct{ background:#052e16; } body.dark-mode .rev-opt.wrong{ background:#3f1212; }
+  .sol{ background:var(--bg); border-left:3px solid var(--primary); padding:8px 12px; margin-top:8px; font-size:0.85rem; border-radius:6px; }
+  .res-actions{ display:flex; gap:12px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+
+  .pal-toggle{ display:none; }
+  @media (max-width:900px){
+    .palette{ position:fixed; top:0; right:-340px; height:100vh; z-index:60; transition:right .3s; overflow-y:auto; box-shadow:-4px 0 20px rgba(0,0,0,0.15); }
+    .palette.show{ right:0; }
+    .action-bar{ right:0; }
+    .pal-toggle{ display:inline-flex; }
+    .res-stats{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div><h3 style="margin-top:16px;">FETCHING TEST...</h3></div>
+
+<!-- ============ WELCOME ============ -->
+<div class="welcome-screen hidden" id="welcomeScreen">
+  <div class="ws-card">
+    <div class="ws-logo"><span class="mk">MMH</span> MOCK MATRIX HUB</div>
+
+    <!-- Page 1 -->
+    <div id="wsPage1">
+      <div class="ws-title" id="wsTitle">Test</div>
+      <div class="ws-sub">Read the instructions carefully before starting.</div>
+      <ul class="ws-detail">
+        <li><span>Duration</span><span id="wsDuration">- min</span></li>
+        <li><span>Total Questions</span><span id="wsTotalQ">-</span></li>
+        <li><span>Maximum Marks</span><span id="wsMaxMarks">-</span></li>
+        <li><span>Marks for Correct Answer</span><span>+2.00</span></li>
+        <li><span>Negative Marking</span><span>-0.50</span></li>
+      </ul>
+      <table class="ws-table">
+        <thead><tr><th>Section</th><th>Questions</th><th>Marks</th></tr></thead>
+        <tbody id="wsSectionRows"></tbody>
+      </table>
+      <div class="ws-actions">
+        <a class="btn btn-ghost" href="cgl/" style="text-decoration:none;">&#8592; Back</a>
+        <button class="btn btn-primary" onclick="gotoWsPage(2)">Next &#8594;</button>
+      </div>
+    </div>
+
+    <!-- Page 2 -->
+    <div id="wsPage2" class="hidden">
+      <div class="ws-title">General Instructions</div>
+      <div class="ws-instr">
+        <p>1. The clock has been set at the server and the countdown timer at the top right will display the time remaining. When the timer reaches zero, the test will submit automatically.</p>
+        <p>2. The Question Palette on the right shows the status of each question using these colours:</p>
+        <div class="leg-row"><span class="leg-chip lg-nv">1</span> Not Visited</div>
+        <div class="leg-row"><span class="leg-chip lg-na">2</span> Not Answered</div>
+        <div class="leg-row"><span class="leg-chip lg-ans">3</span> Answered</div>
+        <div class="leg-row"><span class="leg-chip lg-mk">4</span> Marked for Review</div>
+        <div class="leg-row"><span class="leg-chip lg-mka">5</span> Answered &amp; Marked for Review (will be evaluated)</div>
+        <p>3. Use <b>Save &amp; Next</b> to save your answer and move on. <b>Mark for Review</b> flags a question to revisit. <b>Clear</b> removes your selected answer.</p>
+        <p>4. You can navigate between questions using the palette or Previous / Save &amp; Next.</p>
+        <div style="margin:14px 0;">
+          <label style="font-weight:700; font-size:0.85rem;">Language:
+            <select class="ws-select" id="wsLang"><option>English</option></select>
+          </label>
+        </div>
+      </div>
+      <div class="ws-confirm">
+        <input type="checkbox" id="wsConfirm" onchange="document.getElementById('wsStart').disabled=!this.checked" style="margin-top:2px; width:18px; height:18px;">
+        <label for="wsConfirm">I have read and understood all the instructions. I am ready to begin the test.</label>
+      </div>
+      <div class="ws-actions">
+        <button class="btn btn-ghost" onclick="gotoWsPage(1)">&#8592; Back</button>
+        <button class="btn btn-primary" id="wsStart" disabled onclick="startTest()">Start Test</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EXAM ============ -->
+<div id="examView" class="hidden">
+  <header id="mainHeader">
+    <div class="hdr-top">
+      <div class="hdr-title" id="hdrTitle">Test</div>
+      <div class="hdr-right">
+        <span class="hdr-user"><i class="fas fa-user-circle"></i> Guest</span>
+        <div class="hdr-timer" id="hdrTimer"><i class="fas fa-clock"></i> <span id="timer">00:00</span></div>
+        <button class="hdr-icon-btn" title="Pause" id="pauseBtn" onclick="togglePause()"><i class="fas fa-pause"></i></button>
+        <button class="hdr-icon-btn" title="Dark Mode" onclick="toggleDark()">&#127769;</button>
+        <button class="hdr-icon-btn" title="Fullscreen" onclick="toggleFs()">&#9974;</button>
+        <button class="hdr-icon-btn pal-toggle" title="Palette" onclick="togglePalette()"><i class="fas fa-th"></i></button>
+      </div>
+    </div>
+    <div class="sec-tabs" id="secTabs"></div>
+  </header>
+
+  <div class="exam-body">
+    <div class="q-panel">
+      <div class="q-meta">
+        <div class="q-no" id="qNo">Question 1</div>
+        <div class="q-marks"><span class="pos">+2.00</span> &nbsp;&nbsp; <span class="neg">-0.50</span></div>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div id="optList"></div>
+    </div>
+
+    <aside class="palette" id="palette">
+      <div class="pal-cand">
+        <div class="av"><i class="fas fa-user"></i></div>
+        <div><div style="font-weight:800;">Guest Aspirant</div><div style="font-size:0.72rem;color:var(--grey);" id="palSub"></div></div>
+      </div>
+      <div class="legend">
+        <span><i class="lg lg-ans"></i> Answered</span>
+        <span><i class="lg lg-na"></i> Not Answered</span>
+        <span><i class="lg lg-nv"></i> Not Visited</span>
+        <span><i class="lg lg-mk"></i> Marked</span>
+        <span><i class="lg lg-mka">&#10003;</i> Ans &amp; Marked</span>
+      </div>
+      <div id="palBody"></div>
+      <button class="btn btn-submit" style="width:100%; margin-top:16px;" onclick="openSubmit()">SUBMIT TEST</button>
+    </aside>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn-sm btn-mark" onclick="markForReview()"><i class="fas fa-bookmark"></i> Mark for Review &amp; Next</button>
+    <button class="btn-sm" onclick="clearResponse()">Clear</button>
+    <div class="ab-spacer"></div>
+    <button class="btn-sm" onclick="prevQ()">Previous</button>
+    <button class="btn-sm btn-next" onclick="saveAndNext()">Save &amp; Next</button>
+  </div>
+</div>
+
+<!-- ============ SUBMIT MODAL ============ -->
+<div id="submitModal" class="modal-bg hidden">
+  <div class="modal-card">
+    <h4 style="font-weight:800; margin:0 0 4px;">Submit Test?</h4>
+    <p style="color:var(--grey); font-size:0.85rem; margin:0;">Review your attempt summary before submitting.</p>
+    <div class="sum-grid">
+      <div class="sum-item"><div class="v" style="color:var(--green);" id="smAns">0</div><div class="l">Answered</div></div>
+      <div class="sum-item"><div class="v" style="color:var(--red);" id="smNa">0</div><div class="l">Not Answered</div></div>
+      <div class="sum-item"><div class="v" style="color:var(--purple);" id="smMk">0</div><div class="l">Marked</div></div>
+      <div class="sum-item"><div class="v" style="color:var(--grey);" id="smNv">0</div><div class="l">Not Visited</div></div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeSubmit()">Resume</button>
+      <button class="btn btn-submit" onclick="submitTest(false)">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESULT ============ -->
+<div id="resultView" class="hidden"></div>
+
+<script src="../assets/js/data.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const QUIZ_ID = params.get('id') || '';
+const MODE = params.get('mode') || '';
+const USER = 'Guest';
+const RESULT_KEY = `result_${USER}_${QUIZ_ID}`;
+const STATE_KEY = `state_${USER}_${QUIZ_ID}`;
+const POS = 2, NEG = 0.5;
+
+let TEST = null;
+let QUESTIONS = [];      // {n,q,options,answer,explain,subject,secIndex}
+let SECTIONS = [];       // {name, idxs:[globalIndex...]}
+let resp = [];           // {selected, status}  status: nv|na|ans|mk|mka
+let current = 0;
+let curSection = 0;
+let remaining = 0, timerInt = null, paused = false;
+
+// ---------- find test + build questions ----------
+function findTest(id){
+  const list = (typeof CGL_TESTS !== 'undefined') ? CGL_TESTS : [];
+  return list.find(t => t.id === id) || null;
+}
+
+function setup(){
+  TEST = findTest(QUIZ_ID);
+  if(!TEST){
+    TEST = { id: QUIZ_ID || 'demo', title: QUIZ_ID || 'Demo Test', questions: 10, marks: 20, minutes: 10, category:'full', subject:'All Sections' };
+  }
+  QUESTIONS = (typeof buildQuestions === 'function')
+    ? buildQuestions(TEST)
+    : [];
+  // group sections by subject (first-appearance order)
+  const map = {};
+  SECTIONS = [];
+  QUESTIONS.forEach((q, gi) => {
+    const name = q.subject || 'Section';
+    if(!(name in map)){ map[name] = SECTIONS.length; SECTIONS.push({ name, idxs: [] }); }
+    q.secIndex = map[name];
+    SECTIONS[map[name]].idxs.push(gi);
+  });
+  resp = QUESTIONS.map(() => ({ selected:null, status:'nv' }));
+}
+
+// ---------- welcome ----------
+function showWelcome(){
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('welcomeScreen').classList.remove('hidden');
+  document.getElementById('wsTitle').innerText = TEST.title;
+  document.getElementById('hdrTitle').innerText = TEST.title;
+  document.getElementById('wsDuration').innerText = TEST.minutes + ' min';
+  document.getElementById('wsTotalQ').innerText = QUESTIONS.length;
+  document.getElementById('wsMaxMarks').innerText = (QUESTIONS.length * POS).toFixed(0);
+  document.getElementById('wsSectionRows').innerHTML = SECTIONS.map(s =>
+    `<tr><td>${s.name}</td><td>${s.idxs.length}</td><td>${s.idxs.length * POS}</td></tr>`).join('');
+  document.title = TEST.title + ' | MOCK MATRIX HUB';
+}
+function gotoWsPage(n){
+  document.getElementById('wsPage1').classList.toggle('hidden', n !== 1);
+  document.getElementById('wsPage2').classList.toggle('hidden', n !== 2);
+  window.scrollTo(0,0);
+}
+
+// ---------- start ----------
+function startTest(){
+  document.getElementById('welcomeScreen').classList.add('hidden');
+  document.getElementById('examView').classList.remove('hidden');
+  document.getElementById('palSub').innerText = TEST.title;
+  renderSecTabs();
+  current = 0;
+  renderQuestion();
+  startTimer(TEST.minutes * 60);
+}
+
+// ---------- rendering ----------
+function renderSecTabs(){
+  document.getElementById('secTabs').innerHTML = SECTIONS.map((s,i) =>
+    `<button class="sec-tab ${i===curSection?'active':''}" onclick="goSection(${i})">${s.name}</button>`).join('');
+}
+function goSection(i){ curSection = i; current = SECTIONS[i].idxs[0]; renderQuestion(); }
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  curSection = q.secIndex;
+  renderSecTabs();
+  if(resp[current].status === 'nv') resp[current].status = 'na';
+  const sec = SECTIONS[curSection];
+  const within = sec.idxs.indexOf(current) + 1;
+  document.getElementById('palSub').innerText = sec.name;
+  document.getElementById('qNo').innerText = `Question ${within} of ${sec.idxs.length}`;
+  document.getElementById('qText').innerHTML = q.q;
+  const L = ['A','B','C','D'];
+  document.getElementById('optList').innerHTML = q.options.map((o,i) =>
+    `<div class="opt ${resp[current].selected===i?'selected':''}" onclick="selectOpt(${i})">
+       <span class="bullet">${L[i]}</span><span>${o}</span></div>`).join('');
+  renderPalette();
+  persist();
+}
+
+function selectOpt(i){
+  resp[current].selected = i;
+  resp[current].status = (resp[current].status === 'mk' || resp[current].status === 'mka') ? 'mka' : 'ans';
+  renderQuestion();
+}
+
+function renderPalette(){
+  const body = document.getElementById('palBody');
+  let html = '';
+  SECTIONS.forEach((s, si) => {
+    html += `<div class="pal-sec-name">${s.name}</div><div class="pal-grid">`;
+    s.idxs.forEach((gi, k) => {
+      const st = resp[gi].status;
+      let cls = st==='ans'?'ans':st==='na'?'na':st==='mk'?'mk':st==='mka'?'mka':'';
+      if(gi===current) cls += ' cur';
+      html += `<button class="pal-btn ${cls}" onclick="jump(${gi})">${k+1}</button>`;
+    });
+    html += `</div>`;
+  });
+  body.innerHTML = html;
+}
+function jump(gi){ current = gi; renderQuestion(); }
+
+function saveAndNext(){
+  if(resp[current].selected===null && resp[current].status==='na'){ /* stays not answered */ }
+  goNext();
+}
+function markForReview(){
+  resp[current].status = resp[current].selected!==null ? 'mka' : 'mk';
+  goNext();
+}
+function clearResponse(){ resp[current].selected = null; resp[current].status = 'na'; renderQuestion(); }
+function goNext(){ if(current < QUESTIONS.length-1){ current++; renderQuestion(); } else renderQuestion(); }
+function prevQ(){ if(current>0){ current--; renderQuestion(); } }
+function togglePalette(){ document.getElementById('palette').classList.toggle('show'); }
+
+// ---------- timer ----------
+function startTimer(sec){
+  remaining = sec; updateTimer();
+  timerInt = setInterval(() => {
+    if(paused) return;
+    remaining--; updateTimer();
+    if(remaining<=0){ clearInterval(timerInt); submitTest(true); }
+  }, 1000);
+}
+function updateTimer(){
+  const h=Math.floor(remaining/3600), m=Math.floor((remaining%3600)/60), s=remaining%60;
+  document.getElementById('timer').innerText = (h>0?String(h).padStart(2,'0')+':':'') + String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('hdrTimer').classList.toggle('low', remaining<=60);
+}
+function togglePause(){
+  paused = !paused;
+  document.getElementById('pauseBtn').innerHTML = paused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>';
+  if(paused){ const st = JSON.parse(localStorage.getItem(STATE_KEY)||'{}'); st.isPaused=true; localStorage.setItem(STATE_KEY, JSON.stringify(st)); }
+}
+function toggleDark(){ document.body.classList.toggle('dark-mode'); localStorage.setItem('mmh_theme', document.body.classList.contains('dark-mode')?'dark':'light'); }
+function toggleFs(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } else { document.exitFullscreen && document.exitFullscreen(); } }
+
+// ---------- persistence ----------
+function persist(){
+  try{
+    localStorage.setItem(STATE_KEY, JSON.stringify({
+      isPaused:false, current, remaining, answers: resp.map(r=>r.selected), statuses: resp.map(r=>r.status)
+    }));
+  }catch(e){}
+}
+
+// ---------- submit ----------
+function openSubmit(){
+  const ans = resp.filter(r=>r.status==='ans'||r.status==='mka').length;
+  const na  = resp.filter(r=>r.status==='na').length;
+  const mk  = resp.filter(r=>r.status==='mk').length;
+  const nv  = resp.filter(r=>r.status==='nv').length;
+  document.getElementById('smAns').innerText=ans;
+  document.getElementById('smNa').innerText=na;
+  document.getElementById('smMk').innerText=mk;
+  document.getElementById('smNv').innerText=nv;
+  document.getElementById('submitModal').classList.remove('hidden');
+}
+function closeSubmit(){ document.getElementById('submitModal').classList.add('hidden'); }
+
+function submitTest(auto){
+  if(timerInt) clearInterval(timerInt);
+  closeSubmit();
+  let correct=0, wrong=0, unatt=0, score=0;
+  const secStats = SECTIONS.map(s=>({ name:s.name, total:s.idxs.length, correct:0, wrong:0, unatt:0, score:0 }));
+  QUESTIONS.forEach((q,i)=>{
+    const sel = resp[i].selected;
+    const ss = secStats[q.secIndex];
+    if(sel===null){ unatt++; ss.unatt++; }
+    else if(sel===q.answer){ correct++; score+=POS; ss.correct++; ss.score+=POS; }
+    else { wrong++; score-=NEG; ss.wrong++; ss.score-=NEG; }
+  });
+  const total = QUESTIONS.length * POS;
+  const accuracy = (correct+wrong)>0 ? Math.round(correct/(correct+wrong)*100) : 0;
+  const result = { quizId:QUIZ_ID, title:TEST.title, ts:Date.now(), score:+score.toFixed(2), total, correct, wrong, unatt, accuracy, secStats, answers:resp.map(r=>r.selected) };
+  try{ localStorage.setItem(RESULT_KEY, JSON.stringify(result)); localStorage.removeItem(STATE_KEY); }catch(e){}
+  showResult(result);
+}
+
+// ---------- result ----------
+function showResult(r){
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('welcomeScreen').classList.add('hidden');
+  document.getElementById('examView').classList.add('hidden');
+  const rv = document.getElementById('resultView');
+  rv.classList.remove('hidden');
+  const L=['A','B','C','D'];
+  const review = QUESTIONS.map((q,i)=>{
+    const sel = r.answers[i];
+    const opts = q.options.map((o,oi)=>{
+      let cls=''; if(oi===q.answer) cls='correct'; else if(oi===sel && sel!==q.answer) cls='wrong';
+      return `<div class="rev-opt ${cls}">${L[oi]}. ${o} ${oi===q.answer?'<i class="fas fa-check" style="color:#16a34a;"></i>':''} ${oi===sel?'<span style="font-size:0.7rem;color:#64748b;">(your answer)</span>':''}</div>`;
+    }).join('');
+    const tag = sel===null?'<span style="color:#64748b;">Skipped</span>':(sel===q.answer?'<span style="color:#16a34a;">Correct</span>':'<span style="color:#ef4444;">Incorrect</span>');
+    return `<div class="rev-q"><div class="rev-head"><span>Q${i+1} &middot; ${q.subject||''}</span><span>${tag}</span></div>
+      <div style="font-weight:600; margin-bottom:8px;">${q.q}</div>${opts}
+      ${q.explain?`<div class="sol"><b>Solution:</b> ${q.explain}</div>`:''}</div>`;
+  }).join('');
+  const rows = r.secStats.map(s=>`<tr><td>${s.name}</td><td>${s.total}</td><td style="color:#16a34a;">${s.correct}</td><td style="color:#ef4444;">${s.wrong}</td><td>${s.unatt}</td><td><b>${s.score.toFixed(2)}</b></td></tr>`).join('');
+  rv.innerHTML = `
+    <div class="res-hero">
+      <div style="font-size:0.8rem; font-weight:700; color:#64748b;">${r.title}</div>
+      <div class="res-score">${r.score.toFixed(2)} <span style="font-size:1.2rem; color:#64748b;">/ ${r.total}</span></div>
+      <div style="font-weight:700; color:#16a34a;">Test Submitted Successfully</div>
+    </div>
+    <div class="res-stats">
+      <div class="stat"><div class="v" style="color:#16a34a;">${r.correct}</div><div class="l">Correct</div></div>
+      <div class="stat"><div class="v" style="color:#ef4444;">${r.wrong}</div><div class="l">Incorrect</div></div>
+      <div class="stat"><div class="v" style="color:#64748b;">${r.unatt}</div><div class="l">Skipped</div></div>
+      <div class="stat"><div class="v" style="color:#2563eb;">${r.accuracy}%</div><div class="l">Accuracy</div></div>
+    </div>
+    <h3 style="font-size:1rem; font-weight:800;">Section-wise Analysis</h3>
+    <table class="sec-table"><thead><tr><th>Section</th><th>Total</th><th>Correct</th><th>Wrong</th><th>Skipped</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="res-actions">
+      <button class="btn btn-submit" onclick="reattemptTest()"><i class="fas fa-redo"></i> Reattempt</button>
+      <a class="btn btn-ghost" href="cgl/" style="text-decoration:none;"><i class="fas fa-list"></i> Back to Tests</a>
+    </div>
+    <h3 style="font-size:1rem; font-weight:800;">Solutions</h3>${review}`;
+  window.scrollTo(0,0);
+}
+function reattemptTest(){
+  localStorage.removeItem(RESULT_KEY); localStorage.removeItem(STATE_KEY);
+  location.href = location.pathname + '?id=' + encodeURIComponent(QUIZ_ID) + '&mode=reattempt';
+}
+
+// ---------- boot ----------
+function boot(){
+  if(localStorage.getItem('mmh_theme')==='dark') document.body.classList.add('dark-mode');
+  setup();
+  if(MODE==='reattempt'){ localStorage.removeItem(RESULT_KEY); localStorage.removeItem(STATE_KEY); }
+  const existing = MODE!=='reattempt' ? localStorage.getItem(RESULT_KEY) : null;
+  if(existing){ try{ showResult(JSON.parse(existing)); return; }catch(e){} }
+  setTimeout(showWelcome, 350);
+}
+boot();
+</script>
+</body>
+</html>
