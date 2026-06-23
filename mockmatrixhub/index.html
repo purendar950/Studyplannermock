@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MOCK MATRIX HUB</title>
+    <meta name="description" content="Free SSC Mock Tests based on latest pattern. Practice PYQ, Sectional, Subject-wise, and Full Mocks.">
+    <script>
+        (function() {
+            if (localStorage.getItem('mmh_theme') === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <meta name="theme-color" content="#2563eb">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --secondary: #1e40af;
+            --accent: #f59e0b;
+            --text-dark: #0f172a;
+            --text-grey: #64748b;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        body.dark-mode {
+            --text-dark: #f1f5f9;
+            --text-grey: #94a3b8;
+            --bg-light: #0f172a;
+            --white: #1e293b;
+            --border: #334155;
+            background-color: #020617 !important;
+            color: var(--text-dark);
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-light); color: var(--text-dark); transition: background 0.3s ease; -webkit-tap-highlight-color: transparent; padding-bottom: 70px; }
+
+        .app-header { background: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border); }
+        .brand-logo { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .brand-mark { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--primary); display:flex; align-items:center; justify-content:center; background:var(--primary); color:#fff; font-size:0.85rem; }
+
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; display: none; backdrop-filter: blur(3px); }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--white); z-index: 1050; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar.show { left: 0; }
+        .sidebar-header { background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); padding: 35px 20px; color: white; }
+        .user-avatar-circle { width: 55px; height: 55px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.5rem; border: 3px solid rgba(255,255,255,0.3); }
+        .menu-item { display: flex; align-items: center; padding: 14px 25px; color: var(--text-dark); text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .menu-item i { width: 35px; font-size: 1.1rem; color: var(--text-grey); }
+        .menu-item:hover { background: var(--primary-light); color: var(--primary); }
+        .menu-item.pro-btn { background: #fff7ed; color: #9a3412; font-weight: 700; }
+
+        .greeting-section { padding: 20px 20px 10px; }
+        .greeting-text { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.4rem; background: linear-gradient(135deg, #1e3a8a, #2563eb, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .banner-container { width: 100%; padding: 0 20px; margin-bottom: 25px; position: relative; height: 180px; }
+        .banner-wrapper { position: relative; width: 100%; height: 100%; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .banner-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 0.6s ease-in-out; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; text-align: center; padding: 20px; }
+        .banner-slide.active { opacity: 1; visibility: visible; }
+        #slide0 { background: linear-gradient(135deg, #1e3a8a, #2563eb); }
+        #slide1 { background: linear-gradient(135deg, #b45309, #f59e0b); }
+        .banner-slide h2 { font-family:'Poppins',sans-serif; font-weight:800; font-size:1.4rem; margin:0 0 6px; }
+        .banner-slide p { font-size:0.85rem; opacity:0.9; margin:0 0 14px; }
+        .banner-btn { background: rgba(0,0,0,0.35); color: white !important; padding: 8px 26px; border-radius: 10px; font-weight: 800; text-decoration: none; border: 1px solid rgba(255,255,255,0.4); font-size:0.85rem; }
+        .banner-nav { position: absolute; top: 50%; left: 0; width: 100%; display: flex; justify-content: space-between; transform: translateY(-50%); z-index: 10; pointer-events: none; padding: 0 10px; }
+        .nav-arrow { width: 32px; height: 32px; background: var(--white); box-shadow: var(--shadow-sm); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; pointer-events: auto; border: 1px solid var(--border); }
+        .banner-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; transition: 0.3s; }
+        .dot.active { width: 20px; background: var(--primary); border-radius: 10px; }
+
+        .action-container { padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
+        .box-style { border-radius: 20px; padding: 22px 25px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: inherit; border: 1px solid var(--border); box-shadow: var(--shadow-sm); min-height: 70px; }
+        .box-content { display: flex; align-items: center; gap: 15px; }
+        .box-1 { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); }
+        .box-2 { background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%); }
+        .box-3 { background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); }
+        .box-style i.lead-icon { font-size: 1.6rem; color: var(--primary); }
+        .box-2 i.lead-icon { color: var(--accent); }
+        .box-3 i.lead-icon { color: #16a34a; }
+        .box-style h4 { font-size: 0.95rem; font-weight: 800; margin: 0; }
+        .box-arrow { font-size: 1.2rem; color: var(--text-grey); opacity: 0.5; }
+        .free-badge-green { background: #22c55e; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: 800; }
+        .new-badge-blink { background: #ef4444; color: white; font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: 900; margin-left: 8px; animation: blink 1s steps(5, start) infinite; }
+        @keyframes blink { to { visibility: hidden; } }
+
+        .rec-section { padding: 25px 20px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-header h3 { font-size: 1rem; font-weight: 800; margin: 0; }
+        .view-all-btn { font-size: 0.75rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .rec-grid { display: flex; flex-direction: column; gap: 12px; }
+        .rec-card { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border-radius: 18px; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); }
+        .rec-left { display: flex; align-items: center; gap: 15px; }
+        .rec-thumb { width: 55px; height: 55px; border-radius: 12px; background: linear-gradient(135deg, var(--secondary), var(--primary)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Poppins',sans-serif; }
+        .rec-card h4 { font-size: 0.9rem; font-weight: 800; margin: 0; }
+        .rec-card p { font-size: 0.75rem; color: var(--text-grey); margin: 3px 0 0; }
+
+        .tagline { text-align: center; padding: 30px 20px; font-weight: 800; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; color: var(--text-grey); opacity: 0.8; }
+
+        .fab-container { position: fixed; bottom: 85px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 999; }
+        .fab { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.6rem; box-shadow: 0 6px 20px rgba(0,0,0,0.15); text-decoration: none; }
+        .fab-tg { background: #0088cc; } .fab-wa { background: #25d366; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border); z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.03); }
+        .nav-item { text-align: center; color: var(--text-grey); text-decoration: none; font-size: 0.7rem; font-weight: 700; flex: 1; transition: 0.2s; }
+        .nav-item i { display: block; font-size: 1.3rem; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); }
+
+        #darkModeToggle { background: var(--white); color: var(--text-dark); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 1rem; cursor: pointer; }
+        .hidden { display: none !important; }
+        body.dark-mode .box-style, body.dark-mode .rec-card { background: #1e293b !important; border-color: #334155 !important; color: #f1f5f9 !important; }
+        body.dark-mode .box-style h4, body.dark-mode .rec-card h4 { color: #f8fafc; }
+        body.dark-mode .rec-card p { color: #94a3b8 !important; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="d-flex align-items-center gap-3">
+            <i class="fas fa-bars fs-5" id="menuBtn" style="cursor: pointer;" onclick="toggleSidebar()"></i>
+            <a href="/" class="brand-logo">
+                <span class="brand-mark">MMH</span>
+                <span>MOCK MATRIX <span style="color:var(--text-dark)">HUB</span></span>
+            </a>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button id="darkModeToggle" onclick="toggleTheme()">&#127769;</button>
+            <a href="#" onclick="alert('Login is a demo placeholder.');return false;" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm">LOGIN</a>
+        </div>
+    </header>
+
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <nav id="appSidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-avatar-circle"><i class="fas fa-user"></i></div>
+                <div>
+                    <h6 class="m-0 fw-bold">Aspirant</h6>
+                    <div class="mt-1"><span class="badge bg-light text-dark">Free Plan</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="py-3 flex-grow-1 overflow-auto">
+            <a href="/" class="menu-item"><i class="fas fa-house-user"></i> Home</a>
+            <a href="exams/" class="menu-item"><i class="fas fa-file-signature"></i> Mock Tests</a>
+            <a href="exams/cgl/" class="menu-item"><i class="fas fa-graduation-cap"></i> SSC CGL</a>
+            <a href="#" onclick="alert('Premium plans coming soon!');return false;" class="menu-item pro-btn"><i class="fas fa-crown"></i> Buy Premium</a>
+            <div class="border-bottom my-2"></div>
+            <a href="#" onclick="alert('Coming soon');return false;" class="menu-item"><i class="fas fa-bookmark"></i> Saved Questions</a>
+            <a href="#" onclick="alert('Coming soon');return false;" class="menu-item"><i class="fas fa-shield-halved"></i> Privacy Policy</a>
+        </div>
+    </nav>
+
+    <div class="greeting-section">
+        <div class="greeting-text">Welcome, Aspirant</div>
+        <div class="small text-muted fw-bold">ON MOCK MATRIX HUB</div>
+    </div>
+
+    <div class="banner-container">
+        <div class="banner-wrapper">
+            <div class="banner-slide active" id="slide0">
+                <h2>MMH PASS</h2>
+                <p>Unlock all premium mocks at one price</p>
+                <a href="#" onclick="alert('Pricing coming soon');return false;" class="banner-btn">VIEW PLAN</a>
+            </div>
+            <div class="banner-slide" id="slide1">
+                <h2>BECOME A PARTNER</h2>
+                <p>Refer & earn with Mock Matrix Hub</p>
+                <a href="#" onclick="alert('Partner program coming soon');return false;" class="banner-btn">BECOME PARTNER</a>
+            </div>
+        </div>
+        <div class="banner-nav">
+            <div class="nav-arrow" onclick="moveSlide(-1)"><i class="fas fa-chevron-left"></i></div>
+            <div class="nav-arrow" onclick="moveSlide(1)"><i class="fas fa-chevron-right"></i></div>
+        </div>
+        <div class="banner-dots">
+            <div class="dot active" id="dot0" onclick="goSlide(0)"></div>
+            <div class="dot" id="dot1" onclick="goSlide(1)"></div>
+        </div>
+    </div>
+
+    <div class="action-container">
+        <a href="exams/" class="box-style box-1">
+            <div class="box-content"><i class="fas fa-graduation-cap lead-icon"></i><h4>EXPLORE EXAMS</h4></div>
+            <i class="fas fa-chevron-right box-arrow"></i>
+        </a>
+        <a href="exams/cgl/" class="box-style box-1">
+            <div class="box-content"><i class="fas fa-layer-group lead-icon"></i><h4>IMPORTANT SERIES <span class="new-badge-blink">NEW</span></h4></div>
+            <i class="fas fa-chevron-right box-arrow"></i>
+        </a>
+        <a href="#" onclick="alert('Live tests coming soon!');return false;" class="box-style box-2">
+            <div class="box-content"><i class="fas fa-tower-broadcast lead-icon"></i><h4>LIVE TESTS <span class="free-badge-green">FREE</span></h4></div>
+            <i class="fas fa-chevron-right box-arrow"></i>
+        </a>
+        <a href="#" onclick="alert('Important PDFs and Notes are coming soon!');return false;" class="box-style box-3">
+            <div class="box-content"><i class="fas fa-file-pdf lead-icon"></i><h4>IMPORTANT PDFs &amp; NOTES</h4></div>
+            <i class="fas fa-chevron-right box-arrow"></i>
+        </a>
+    </div>
+
+    <div class="rec-section">
+        <div class="section-header">
+            <h3>RECOMMENDED SERIES</h3>
+            <a href="exams/" class="view-all-btn">VIEW ALL</a>
+        </div>
+        <div class="rec-grid">
+            <a href="exams/cgl/" class="rec-card">
+                <div class="rec-left">
+                    <div class="rec-thumb">CGL</div>
+                    <div class="text-start"><h4>SSC CGL</h4><p>Tier I &amp; Tier II Mocks</p></div>
+                </div>
+                <i class="fas fa-chevron-right box-arrow"></i>
+            </a>
+            <a href="exams/" class="rec-card">
+                <div class="rec-left">
+                    <div class="rec-thumb">CHSL</div>
+                    <div class="text-start"><h4>SSC CHSL</h4><p>Coming Soon</p></div>
+                </div>
+                <i class="fas fa-chevron-right box-arrow"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="tagline">PRACTICE TO PERFECTION</div>
+
+    <div class="fab-container">
+        <a href="#" onclick="return false;" class="fab fab-wa"><i class="fab fa-whatsapp"></i></a>
+        <a href="#" onclick="return false;" class="fab fab-tg"><i class="fab fa-telegram-plane"></i></a>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item active"><i class="fas fa-home"></i><span>HOME</span></a>
+        <a href="exams/" class="nav-item"><i class="fas fa-file-pen"></i><span>EXAMS</span></a>
+        <a href="exams/cgl/" class="nav-item"><i class="fas fa-bolt"></i><span>CGL</span></a>
+        <a href="#" onclick="alert('Coming soon');return false;" class="nav-item"><i class="fas fa-bell"></i><span>ALERTS</span></a>
+        <a href="#" onclick="alert('Coming soon');return false;" class="nav-item"><i class="fas fa-user-circle"></i><span>PROFILE</span></a>
+    </nav>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('appSidebar').classList.toggle('show');
+            const ov = document.getElementById('sidebarOverlay');
+            ov.style.display = ov.style.display === 'block' ? 'none' : 'block';
+        }
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            document.documentElement.classList.toggle('dark-mode');
+            localStorage.setItem('mmh_theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        // Banner slider
+        let curSlide = 0;
+        const totalSlides = 2;
+        function showSlide(n) {
+            curSlide = (n + totalSlides) % totalSlides;
+            for (let i = 0; i < totalSlides; i++) {
+                document.getElementById('slide' + i).classList.toggle('active', i === curSlide);
+                document.getElementById('dot' + i).classList.toggle('active', i === curSlide);
+            }
+        }
+        function moveSlide(d) { showSlide(curSlide + d); }
+        function goSlide(n) { showSlide(n); }
+        setInterval(() => moveSlide(1), 5000);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('mmh_theme') === 'dark') document.body.classList.add('dark-mode');
+        });
+    </script>
+</body>
+</html>
