@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Mock Tests & Test Series | Study Planner Mock</title>
+  <meta name="description" content="Exam-pattern mock tests — full mocks, sectionals and subject-wise practice with sectional timing, negative marking, All India Rank and instant analysis." />
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container inner">
+      <a href="../index.html" class="brand">
+        <span class="logo">S</span>
+        <span>STUDY PLANNER MOCK<small>SMART MOCK TESTS</small></span>
+      </a>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="../index.html#exams">Test Series</a>
+        <span id="authSlot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div class="container">
+        <div class="crumbs"><a href="../index.html">Home</a> / <a href="../index.html#exams">Test Series</a> / <span id="crumbExam">Exam</span></div>
+        <h1 id="examName">Loading…</h1>
+        <p id="examTagline"></p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:10px;">
+      <div class="container">
+        <!-- Paper / tier tabs -->
+        <div class="tabs" id="tierTabs"></div>
+
+        <!-- Category chips -->
+        <div class="chips" id="catChips">
+          <button class="chip active" data-cat="full">Full Mocks</button>
+          <button class="chip" data-cat="sectional">Sectionals</button>
+          <button class="chip" data-cat="subject">Subject Wise</button>
+        </div>
+
+        <!-- Test list -->
+        <div class="test-list" id="testList"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container foot">
+      <div>© 2026 Study Planner Mock — Practice. Analyze. Improve.</div>
+      <div>
+        <a href="../index.html">Home</a>
+        <a href="../dashboard.html">My Attempts</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/supabaseClient.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/exam.js"></script>
+  <script>window.MMH_AUTH.renderNav({ base: "../" });</script>
+</body>
+</html>

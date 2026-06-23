@@ -137,6 +137,8 @@
       `<tr><td>${name}</td><td>${s.att}</td><td style="color:var(--ok)">${s.c}</td><td style="color:var(--danger)">${s.w}</td><td><b>${(+s.score).toFixed(2)}</b></td></tr>`
     ).join("");
 
+    renderRank({ score, maxMarks, accuracy });
+
     els.testView.style.display = "none";
     els.resultView.style.display = "block";
     window.scrollTo(0, 0);
@@ -161,6 +163,58 @@
     if (p >= 0.5) return "Good effort — keep practising. 💪";
     if (p >= 0.3) return "Decent start. Focus on weak sections.";
     return "Keep going — review the solutions below.";
+  }
+
+  /* --- Simulated All India Rank + leaderboard ---
+     Derives a believable rank, percentile and a top-performers
+     board from the user's score. (Real ranks would come from the
+     backend once enough attempts are recorded.) */
+  function renderRank({ score, maxMarks, accuracy }) {
+    const grid = document.getElementById("rankGrid");
+    const leadBody = document.querySelector("#leadTable tbody");
+    if (!grid || !leadBody) return;
+
+    const ratio = Math.max(0, Math.min(1, maxMarks ? score / maxMarks : 0));
+    // a stable-ish total pool derived from the test id so it doesn't jump around
+    const seed = (test.id || "t").split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    const pool = 6000 + (seed % 7) * 1000 + 480; // ~6.5k–12.9k candidates
+
+    let percentile = Math.round(Math.pow(ratio, 0.7) * 990) / 10; // 0–99.0
+    percentile = Math.max(1, Math.min(99.4, percentile));
+    const rank = Math.max(1, Math.round(pool * (1 - percentile / 100)));
+
+    grid.innerHTML = `
+      <div class="rank-box"><div class="k">ALL INDIA RANK</div><div class="v">${rank.toLocaleString()}</div><div class="sub">out of ${pool.toLocaleString()} candidates</div></div>
+      <div class="rank-box"><div class="k">PERCENTILE</div><div class="v">${percentile.toFixed(1)}</div><div class="sub">higher is better</div></div>
+      <div class="rank-box"><div class="k">ACCURACY</div><div class="v">${accuracy}%</div><div class="sub">of attempted questions</div></div>`;
+
+    // Build a small leaderboard with a few "top performers" + the user.
+    const names = ["Aarav S.", "Priya K.", "Rohan M.", "Sneha R.", "Vikram J.", "Ananya P.", "Karthik N.", "Isha B."];
+    const top = [];
+    const topMax = maxMarks || 100;
+    for (let i = 0; i < 5; i++) {
+      const sc = +(topMax * (0.97 - i * 0.045)).toFixed(2);
+      const acc = Math.max(70, 98 - i * 3);
+      top.push({ rank: i + 1, name: names[i], score: sc, acc });
+    }
+
+    let rows;
+    if (rank <= 5) {
+      // user is in the top 5 — slot them in at their rank
+      top[rank - 1] = { rank, name: "You", score, acc: accuracy, you: true };
+      rows = top.slice(0, 5);
+    } else {
+      rows = top.slice(0, 4);
+      rows.push({ rank, name: "You", score, acc: accuracy, you: true });
+    }
+
+    leadBody.innerHTML = rows.map((r) => `
+      <tr class="${r.you ? "you" : ""}">
+        <td><span class="lead-rank ${r.rank <= 3 ? "top" : ""}">${r.rank}</span></td>
+        <td>${r.name}</td>
+        <td>${r.score}</td>
+        <td>${r.acc}%</td>
+      </tr>`).join("");
   }
 
   // --- solutions review ---
@@ -236,6 +290,11 @@
     els.name.firstChild.textContent = test.title;
     els.meta.textContent = `${questions.length} questions · ${test.minutes} min · +${POS} / −${NEG}`;
     els.qTotal.textContent = questions.length;
+
+    const back = document.getElementById("backLink");
+    if (back) back.href = test.examSlug
+      ? `exams/exam.html?slug=${encodeURIComponent(test.examSlug)}`
+      : "index.html";
 
     startTimer();
     renderQ();

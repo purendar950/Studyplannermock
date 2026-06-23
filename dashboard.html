@@ -16,7 +16,7 @@
       </a>
       <nav class="nav">
         <a href="index.html">Home</a>
-        <a href="exams/cgl/index.html">SSC CGL</a>
+        <a href="index.html#exams">Test Series</a>
         <span id="authSlot"></span>
       </nav>
     </div>
@@ -60,7 +60,7 @@
 
       if (!attempts.length) {
         summary.innerHTML = "";
-        content.innerHTML = `<div class="empty">No attempts yet. <a href="exams/cgl/index.html" style="color:var(--brand)">Take your first test →</a></div>`;
+        content.innerHTML = `<div class="empty">No attempts yet. <a href="exams/exam.html?slug=ssc-cgl" style="color:var(--brand)">Take your first test →</a></div>`;
         return;
       }
 

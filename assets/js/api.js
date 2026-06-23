@@ -36,10 +36,25 @@
   const API = {
     usingServer,
 
-    /* Return the test catalogue for an exam (default: cgl). */
-    async getTests(examSlug = "cgl") {
+    /* List all exams in the catalogue (for the home page grid). */
+    async getExams() {
       if (!usingServer) {
-        return CGL_TESTS.map((t) => ({ ...t }));
+        return EXAMS.map((e) => ({ ...e, testCount: buildExamTests(e).length }));
+      }
+      const { data, error } = await supabase
+        .from("exams")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+
+    /* Return the test catalogue for an exam (default: ssc-cgl). */
+    async getTests(examSlug = "ssc-cgl") {
+      if (!usingServer) {
+        const exam = (typeof getExam === "function" && getExam(examSlug)) || null;
+        const tests = exam ? buildExamTests(exam) : CGL_TESTS;
+        return tests.map((t) => ({ ...t }));
       }
       const { data, error } = await supabase
         .from("tests")
@@ -63,8 +78,15 @@
       }));
     },
 
-    /* Return a single test row by id. */
+    /* Return a single test row by id (searches every exam in demo mode). */
     async getTest(id) {
+      if (!usingServer) {
+        for (const exam of EXAMS) {
+          const found = buildExamTests(exam).find((t) => t.id === id);
+          if (found) return { ...found };
+        }
+        return { ...CGL_TESTS[0] };
+      }
       const all = await this.getTests();
       return all.find((t) => t.id === id) || all[0];
     },
